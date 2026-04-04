@@ -1,4 +1,4 @@
-sv import from .services.appService { generate_explanation }
+sv import from .services.appService { generate_explanation, load_preferences, save_preferences }
 
 def:pub ClientApp() -> JsxElement {
     has selected_text: str = "Docker uses OS-level virtualization to package software into containers.";
@@ -10,26 +10,83 @@ def:pub ClientApp() -> JsxElement {
     has loading: bool = False;
     has error: str = "";
     has result: dict = {};
+    has save_status: str = "Loading saved preferences...";
 
     async can with entry {
-        await run_demo();
+        try {
+            saved = await load_preferences();
+            if saved {
+                if saved["selected_text"] { selected_text = saved["selected_text"]; }
+                if saved["prior_knowledge"] { prior_knowledge = saved["prior_knowledge"]; }
+                if saved["preferred_style"] { preferred_style = saved["preferred_style"]; }
+                if saved["learning_style"] { learning_style = saved["learning_style"]; }
+                if saved["depth"] { depth = saved["depth"]; }
+                retention_mode = saved["retention_mode"] if "retention_mode" in saved else retention_mode;
+                save_status = "Preferences loaded.";
+            } else {
+                save_status = "Using default preferences.";
+            }
+        } except Exception {
+            save_status = "Using default preferences.";
+        }
     }
 
-    def handle_text(e: any) -> None { selected_text = e.target.value; }
-    def handle_prior(e: any) -> None { prior_knowledge = e.target.value; }
-    def handle_style(e: any) -> None { preferred_style = e.target.value; }
-    def handle_learning(e: any) -> None { learning_style = e.target.value; }
-    def set_level_1() -> None { depth = "Level 1"; }
-    def set_level_2() -> None { depth = "Level 2"; }
-    def set_level_3() -> None { depth = "Level 3"; }
-    def set_level_4() -> None { depth = "Level 4"; }
-    def toggle_retention() -> None { retention_mode = not retention_mode; }
+    async def persist_preferences() -> None {
+        try {
+            await save_preferences(selected_text, prior_knowledge, preferred_style, learning_style, depth, retention_mode);
+            save_status = "Preferences saved.";
+        } except Exception {
+            save_status = "Could not save preferences yet.";
+        }
+    }
+
+    def handle_text(e: any) -> None {
+        selected_text = e.target.value;
+    }
+
+    def handle_prior(e: any) -> None {
+        prior_knowledge = e.target.value;
+    }
+
+    def handle_style(e: any) -> None {
+        preferred_style = e.target.value;
+    }
+
+    def handle_learning(e: any) -> None {
+        learning_style = e.target.value;
+    }
+
+    async def set_level_1() -> None {
+        depth = "Level 1";
+        await persist_preferences();
+    }
+
+    async def set_level_2() -> None {
+        depth = "Level 2";
+        await persist_preferences();
+    }
+
+    async def set_level_3() -> None {
+        depth = "Level 3";
+        await persist_preferences();
+    }
+
+    async def set_level_4() -> None {
+        depth = "Level 4";
+        await persist_preferences();
+    }
+
+    async def toggle_retention() -> None {
+        retention_mode = not retention_mode;
+        await persist_preferences();
+    }
 
     async def run_demo() -> None {
         loading = True;
         error = "";
+        await persist_preferences();
         try {
-            result = await generate_explanation(selected_text);
+            result = await generate_explanation(selected_text, depth, prior_knowledge, learning_style, retention_mode, preferred_style);
         } except Exception as ex {
             error = "Could not generate explanation: " + str(ex);
         }
@@ -48,7 +105,7 @@ def:pub ClientApp() -> JsxElement {
                     <div className="max-w-3xl">
                         <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary">Adaptive Explanation Engine</div>
                         <h1 className="mt-4 text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.02]">Build understanding, not just simpler text.</h1>
-                        <p className="mt-4 max-w-2xl text-base md:text-lg text-muted-foreground leading-7">A Chrome-extension-style learning engine that rebuilds confusing ideas from zero, adapts to how the user actually understands language, and helps them retain what they learn.</p>
+                        <p className="mt-4 max-w-2xl text-base md:text-lg text-muted-foreground leading-7">A website that rebuilds confusing ideas from zero, adapts to how the user actually understands language, and helps them retain what they learn.</p>
                         <div className="mt-6 flex flex-wrap gap-3 text-sm">
                             <span className="rounded-full bg-secondary px-4 py-2 font-medium text-primary">Why → Problem → Before → What → How → Tradeoffs</span>
                             <span className="rounded-full bg-muted px-4 py-2 font-medium text-foreground">Terminology bridging</span>
@@ -63,14 +120,15 @@ def:pub ClientApp() -> JsxElement {
                     <div className="rounded-[1.5rem] border border-border bg-card p-6 shadow-soft">
                         <div className="flex items-center justify-between gap-4 flex-wrap">
                             <div>
-                                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">MVP flow</p>
-                                <h2 className="mt-2 text-2xl font-bold">Highlight text → explain better</h2>
+                                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">Website flow</p>
+                                <h2 className="mt-2 text-2xl font-bold">Paste text → explain better</h2>
                             </div>
                             <button onClick={run_demo} disabled={loading} className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50">{("Generating..." if loading else "Explain Better")}</button>
                         </div>
+                        <p className="mt-3 text-sm text-muted-foreground">{save_status}</p>
                         <div className="mt-5">
-                            <label className="block text-sm font-semibold mb-2">Highlighted text</label>
-                            <textarea value={selected_text} onChange={handle_text} className="min-h-36 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm leading-6 outline-none focus:ring-2 focus:ring-primary" placeholder="Paste or simulate highlighted text here" />
+                            <label className="block text-sm font-semibold mb-2">Text to explain</label>
+                            <textarea value={selected_text} onChange={handle_text} className="min-h-36 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm leading-6 outline-none focus:ring-2 focus:ring-primary" placeholder="Paste text here" />
                         </div>
                         <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
