@@ -40,6 +40,11 @@ node TermNode {
         usage_context: str; # when and where this term is used
 }
 
+node ExplanationResponse {
+    has sections: str,
+        terms: list[str];
+}
+
 # ========================================
 # Edges
 # ========================================
@@ -93,7 +98,8 @@ walker:priv ExplainWalker {
         raw_text: str = "",
         source_url: str = "",
         depth: int = -1,
-        session_created_at: str = "";
+        session_created_at: str = "",
+        retention_on: bool = False;
     
     can create with Root entry {
         user_profile_node = [root()-->][?:UserProfile];
@@ -113,6 +119,19 @@ walker:priv ExplainWalker {
 
         #Calling the other walkers
         #...
+        spawn DependencyWalker();
+        spawn ExplanationBuilderWalker();
+
+        # Calling RetentionWalker
+        if self.retention_on {
+            # We have to query for the current ExplanationSession if user has multiple
+            # Sessions saved
+            # CONSIDER ABOVE CHANGES
+            visit ExplanationSession;
+
+            
+            spawn RetentionWalker();
+        }
     }
 }
 
@@ -123,28 +142,89 @@ sem extract_unknown_terms = "Given a string of text called raw_text and a list o
 # TermExtractorWalker, then DependencyWalker, then ExplanationBuilderWalker
 
 # TermExtractorWalker visits the ExplanationSession, reads raw_text, and identifies the unknown terms — 
-#but it doesn't create TermNodes immediately. It stores the term list in its own walker state and passes 
+# but it doesn't create TermNodes immediately. It stores the term list in its own walker state and passes 
 # that list to the ExplanationBuilderWalker. The builder then creates TermNodes and attaches them to whichever 
 # ConceptNode's explanation the term actually appears in. TermExtractorWalker's only real job is early detection — 
 # flagging words so the builder knows what to watch for, not structuring the graph itself.
 walker:priv TermExtractorWalker {
     has raw_text: str = "",
-        known_topics: list[str] = [];
+        known_topics: list[str] = [],
+        terms_list: list[str] = [];
 
-    extract_unknown_terms(raw_text=raw_text, known_topics=known_topics);
+    can extract with ExplanationSession entry {
+        terms_list = extract_unknown_terms(raw_text=raw_text, known_topics=known_topics);
+        # call the ExplanationBuilderWalker
+        root() spawn ExplanationBuilderWalker();
+        report terms_list;
+    }
 }
 
-walker:priv DependencyWalker {
+def discover_prerequesites(raw_text: str, known_topics: list[str]) -> list[str] by llm();
+sem discover_prerequesites = "";
 
+
+walker:priv DependencyWalker {
+    has raw_text: str = "",
+        known_topics: list[str] = [],
+        detail_level: int = -1;
+
+
+    can visit_session with ExplanationSession entry {
+        prerequesite_concepts = discover_prerequesites(raw_text=raw_text, known_topics=known_topics);
+
+        for concept in prerequesite_concepts {
+            here +>: DependsOn(priority=-1, relationship="", auto_discovered=True) :+> ConceptNode(
+                concept_name=concept,
+                detail_level=detail_level,
+                explanation="",
+                is_prereq=True
+            );
+        }
+    }
+}
+
+enum SectionType {
+    WHY_IT_EXISTS,
+    PROBLEM_IT_SOLVES,
+    WHAT_CAME_BEFORE,
+    WHAT_IT_IS,
+    HOW_IT_WORKS,
+    TRADEOFFS,
+    HOW_TO_USE
 }
 
 walker:priv ExplanationBuilderWalker {
+    
+    can build with ExplanationSession entry {
+        has seen_terms: set[str],
+            sections: str = "",
+            terms: list[str] = [];
+        
+        has_concept_edges = [here->:HasConcept:->][?:ConceptNode];
 
+        ordered_edges = sorted(
+            list(has_concept_edges),
+            key=lambda x: HasConcept -> int { return x.order; }
+        );
+
+        report ExplanationResponse(sections=sections, terms=terms);
+    }
 }
+
+def generate_quiz(concept_explanations: list[dict[str : str]]) -> list[str] by llm(); 
+
+sem generate_quiz = "Given concept_explanations which is a list containing a key value pair dictionary such that the key is the concept name and the value is the concept explanation, generate a multiple choice quiz that covers the concepts. The quiz should be returned as a list of dictionaries where the dictionary key is the quiz question and the dictionary value is a list containing the multiple choice options";
 
 walker:priv RetentionWalker {
-    
+    has concept_explanations: list[dict[str : str]];
+
+    can call_quiz with ExplanationSession entry {
+        quiz = generate_quiz(concept_explanations);
+        report quiz;
+    }
 }
+
+
 
 # walker:priv AddTodo {
 #     """Add a new todo item to the user's list."""
