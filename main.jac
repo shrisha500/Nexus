@@ -1,10 +1,10 @@
-"""Fullstack Starter - Entry Point.
-
-Imports server-side symbols and mounts the client app.
+"""
+Adaptive Explanation Engine entry point.
 """
 
-import from services.appService { greet }
+import from services.appService { generate_explanation }
 
+cl import ".styles.global.css";
 cl import from .index { ClientApp }
 
 cl {

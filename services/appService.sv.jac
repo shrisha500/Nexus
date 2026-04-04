@@ -12,9 +12,11 @@ def:pub generate_explanation(text: str, depth: str = "Level 2", prior_knowledge:
     if depth == "Level 1" {
         how_it_works = "It turns hard text into a simpler explanation with the missing background filled in.";
         tradeoffs = "Very simple explanations are easier to understand, but they leave out deeper technical details.";
-    } elif depth == "Level 3" {
+    }
+    elif depth == "Level 3" {
         how_it_works = "It combines term detection, context reconstruction, user-profile inputs, and a structured explanation template so the answer is both personalized and logically ordered.";
-    } elif depth == "Level 4" {
+    }
+    elif depth == "Level 4" {
         how_it_works = "It can be thought of as a knowledge-restructuring pipeline: parse the input, infer prerequisite concepts, rank likely unknown terms, condition the explanation on user profile signals, then generate a layered response with terminology bridging and optional retention prompts.";
         tradeoffs = "Deeper explanations improve transfer and precision, but they take more time and can overwhelm users who only need practical understanding.";
     }
