@@ -2,6 +2,7 @@
 node_modules/
 .vscode/
 .idea/
+jac-env/
 
 .jac-ide/
 export-*.jacpack

@@ -84,6 +84,12 @@ edge UsesTerm {
         is_defined_before_use: bool; # True if an earlier ConceptNode already introduced this term
 }
 
+# Sort key: type checker needs session/concept parameters to resolve HasConcept edge type.
+def has_concept_order(session: ExplanationSession, concept: ConceptNode) -> int {
+    e = int([session->:HasConcept:->concept][0].order);
+    return e;
+}
+
 
 # ============================================================
 # ENUMS
@@ -235,7 +241,7 @@ walker Explain {
             session_id=session_id,
             known_topics=profile.known_topics,
             style_example=profile.style_example,
-            flagged_terms=terms
+            flagged_terms=list[str](terms)
         );
 
         # Step 7: Optionally generate a quiz.
@@ -268,16 +274,16 @@ walker SetupProfile {
             p = existing[0];
             p.known_topics=known_topics;
             p.style_example =style_example;
-            p.depth_pref = here.depth_pref;
-            p.retention_mode = here.retention_mode;
+            p.depth_pref = depth_pref;
+            p.retention_mode = retention_mode;
             report { "status": "updated", "profile_id": jid(p) };
         } 
         else {
             new_profile = UserProfile(
-                known_topics=here.known_topics,
-                style_example=here.style_example,
-                depth_pref=here.depth_pref,
-                retention_mode=here.retention_mode
+                known_topics=known_topics,
+                style_example=style_example,
+                depth_pref=depth_pref,
+                retention_mode=retention_mode
             );
             root() ++> new_profile;
             report { "status": "created", "profile_id": jid(new_profile) };
@@ -342,9 +348,8 @@ walker GetSessionDetail {
         all_sessions = [profile->:HasSession:->][?:ExplanationSession];
 
         # Find the one session matching the requested ID.
-        target = null;
         for s in all_sessions {
-            if str(jid(s)) == here.session_id {
+            if str(jid(s)) == session_id {
                 target = s;
                 break;
             }
@@ -355,11 +360,12 @@ walker GetSessionDetail {
             disengage;
         }
 
+
         # Collect all ConceptNodes, sorted by their render order.
         concept_nodes = [target->:HasConcept:->][?:ConceptNode];
         ordered = sorted(
             concept_nodes,
-            key=lambda c: ConceptNode -> int { return [target->:HasConcept:->c][0].order; }
+            key=lambda c: ConceptNode -> int { return has_concept_order(target, c); }
         );
 
         concepts_out = [];
@@ -392,7 +398,7 @@ walker GetSessionDetail {
         }
 
         report {
-            "session_id": here.session_id,
+            "session_id": session_id,
             "raw_text": target.raw_text,
             "source_url": target.source_url,
             "depth": target.depth,
@@ -424,9 +430,9 @@ walker:priv TermExtractorWalker {
         profile = [root()-->][?:UserProfile][0];
         all_sessions = [profile->:HasSession:->][?:ExplanationSession];
 
-        target = null;
+        #target = null;
         for s in all_sessions {
-            if str(jid(s)) == here.session_id {
+            if str(jid(s)) == session_id {
                 target = s;
                 break;
             }
@@ -439,7 +445,7 @@ walker:priv TermExtractorWalker {
 
         terms = extract_unknown_terms(
             raw_text=target.raw_text,
-            known_topics=here.known_topics
+            known_topics=known_topics
         );
 
         report terms;
@@ -463,9 +469,9 @@ walker:priv DependencyWalker {
         profile = [root()-->][?:UserProfile][0];
         all_sessions = [profile->:HasSession:->][?:ExplanationSession];
 
-        target = null;
+        #target = null;
         for s in all_sessions {
-            if str(jid(s)) == here.session_id {
+            if str(jid(s)) == session_id {
                 target = s;
                 break;
             }
@@ -476,21 +482,23 @@ walker:priv DependencyWalker {
         # Create the main ConceptNode for the user's selected text.
         main_concept = ConceptNode(
             concept_name=target.raw_text[:80], # TODO: Should instead make a by llm() function to parse raw text for the concept name
-            depth_level=here.depth_remaining,
+            depth_level=depth_remaining,
             is_prereq=False
         );
         # order=-1 is a placeholder; topo sort will overwrite it below.
         target +>: HasConcept(order=-1, user_actually_chose=True) :+> main_concept; # TODO: change name to user_actually_chose
 
         # BFS queue: each item is [ConceptNode, remaining_depth].
-        queue = [[main_concept, here.depth_remaining]];
+        bfs_queue: list[list[ConceptNode, int]] = [];
+        bfs_queue.append([main_concept, depth_remaining]);
+        #bfs_queue = [[main_concept, depth_remaining]];
         visited_names = [target.raw_text[:80]]; # ??????
         all_nodes = [main_concept];
 
-        while queue {
-            current_node = queue[0][0];
-            remaining = queue[0][1];
-            queue = queue[1:];
+        while bfs_queue {
+            current_node = bfs_queue[0][0];
+            remaining = int(bfs_queue[0][1]);
+            bfs_queue = bfs_queue[1:];
 
             # At depth 1 we explain the concept but discover no deeper prereqs.
             if remaining <= 1 {
@@ -499,8 +507,8 @@ walker:priv DependencyWalker {
 
             prereqs = discover_prerequisites(
                 concept_name=current_node.concept_name,
-                known_topics=here.known_topics + visited_names,
-                depth_remaining=remaining - 1
+                known_topics=list[str](known_topics + visited_names),
+                depth_remaining=int(remaining - 1)
             );
 
             for idx in range(len(prereqs)) {
@@ -533,15 +541,16 @@ walker:priv DependencyWalker {
                 target +>: HasConcept(order=-1, user_actually_chose=False) :+> prereq_node;
 
                 all_nodes.append(prereq_node);
-                queue.append([prereq_node, remaining - 1]);
+                bfs_queue.append([prereq_node, remaining - 1]);
             }
         }
 
         # Run topological sort and assign order to HasConcept edges.
-        sorted_nodes = here.topo_sort(all_nodes);
+        sorted_nodes = topo_sort(all_nodes);
         for idx in range(len(sorted_nodes)) {
-            edge = [target->:HasConcept:->sorted_nodes[idx]][0];
-            edge.order = idx;
+            sorted_node = sorted_nodes[idx];
+            hc = [target->:HasConcept:->sorted_node][0];
+            hc.order = idx;
         }
     }
 
@@ -564,15 +573,15 @@ walker:priv DependencyWalker {
             }
         }
 
-        queue = [n for n in nodes if in_degree[n.concept_name] == 0];
+        queue: list[ConceptNode] = [n for n in nodes if in_degree[n.concept_name] == 0];
         sorted_list = [];
 
         while queue {
-            node = queue[0];
+            cur = queue[0];
             queue = queue[1:];
-            sorted_list.append(node);
+            sorted_list.append(cur);
 
-            dependents = [node<-:DependsOn:<-][?:ConceptNode];
+            dependents = [cur<-:DependsOn:<-][?:ConceptNode];
             for d in dependents {
                 in_degree[d.concept_name] -= 1;
                 if in_degree[d.concept_name] == 0 {
@@ -610,9 +619,9 @@ walker:priv ExplanationBuilderWalker {
         profile = [root()-->][?:UserProfile][0];
         all_sessions = [profile->:HasSession:->][?:ExplanationSession];
 
-        target = null;
+        #target = ExplanationSession(raw_text="", source_url="", depth=-1, created_at="");
         for s in all_sessions {
-            if str(jid(s)) == here.session_id {
+            if str(jid(s)) == session_id {
                 target = s;
                 break;
             }
@@ -624,7 +633,7 @@ walker:priv ExplanationBuilderWalker {
         concept_nodes = [target->:HasConcept:->][?:ConceptNode];
         ordered = sorted(
             concept_nodes,
-            key=lambda c: ConceptNode -> int { return [target->:HasConcept:->c][0].order; }
+            key=lambda c: ConceptNode -> int { return has_concept_order(target, c); }
         );
 
         for concept in ordered {
@@ -647,14 +656,14 @@ walker:priv ExplanationBuilderWalker {
             for section_type in section_types {
                 section_text = build_section(
                     concept_name=concept.concept_name,
-                    section_type=section_type.value,
-                    style_example=here.style_example,
+                    section_type=SectionType(section_type).value,
+                    style_example=style_example,
                     depth_level=concept.depth_level,
-                    known_terms=here.known_topics + here.seen_terms
+                    known_terms=list[str](known_topics + seen_terms)
                 );
                 full_explanation += section_text + "\n\n";
                 sections_out.append({
-                    "type": section_type.value,
+                    "type": SectionType(section_type).value,
                     "content": section_text
                 });
             }
@@ -666,16 +675,16 @@ walker:priv ExplanationBuilderWalker {
             # Find flagged terms that appear in this explanation,
             # create TermNodes, and attach them via UsesTerm edges.
             terms_out = [];
-            for term_word in here.flagged_terms {
-                pos = full_explanation.find(term_word);
+            for term_word in flagged_terms {
+                pos = int(full_explanation.find(term_word));
                 if pos == -1 { continue; } # NOTE: Look at this again
 
-                already_defined = term_word in here.seen_terms;
+                already_defined = term_word in seen_terms;
 
                 term_data = explain_term(
                     word=term_word,
                     concept_context=concept.concept_name,
-                    style_example=here.style_example
+                    style_example=style_example
                 );
 
                 term_node = TermNode(
@@ -691,7 +700,7 @@ walker:priv ExplanationBuilderWalker {
                 ) :+> term_node;
 
                 if not already_defined {
-                    here.seen_terms.append(term_word);
+                    seen_terms.append(str(term_word));
                 }
 
                 terms_out.append({
@@ -705,7 +714,7 @@ walker:priv ExplanationBuilderWalker {
             }
 
             edge_data = [target->:HasConcept:->concept][0];
-            here.built_concepts.append({
+            built_concepts.append({
                 "concept_name": concept.concept_name,
                 "is_prereq": concept.is_prereq,
                 "user_actually_chose": edge_data.user_actually_chose,
@@ -716,7 +725,7 @@ walker:priv ExplanationBuilderWalker {
             });
         }
 
-        report here.built_concepts;
+        report built_concepts;
     }
 }
 
@@ -734,9 +743,9 @@ walker:priv RetentionWalker {
         profile = [root()-->][?:UserProfile][0];
         all_sessions = [profile->:HasSession:->][?:ExplanationSession];
 
-        target = null;
+        #target = null;
         for s in all_sessions {
-            if str(jid(s)) == here.session_id {
+            if str(jid(s)) == session_id {
                 target = s;
                 break;
             }
