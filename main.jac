@@ -1,15 +1,19 @@
+"""hackathon_project - Entry Point.
+
+Combines server-side endpoints with client-side UI.
 """
-Adaptive Explanation Engine entry point.
-"""
 
-import from services.appService { generate_explanation }
-import from services.appService { load_preferences, save_preferences }
+# Import server-side data models and walkers
+sv {
+    import from endpoints { Todo, AddTodo, ListTodos, ToggleTodo, DeleteTodo }
+}
 
-cl import ".styles.global.css";
-cl import from .index { ClientApp }
-
+# Client-side UI
 cl {
-    def:pub app() -> JsxElement {
-        return <ClientApp />;
+    import from .frontend { app as ClientApp }
+
+    def:pub app -> JsxElement {
+        return
+            <ClientApp />;
     }
 }
