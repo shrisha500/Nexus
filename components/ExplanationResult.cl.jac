@@ -1,6 +1,6 @@
 """ExplanationResult component — renders the structured explanation returned by the backend."""
 
-def:pub ExplanationResult(
+cl def:pub ExplanationResult(
     concepts: list,
     quiz: list
 ) -> JsxElement {
@@ -16,8 +16,7 @@ def:pub ExplanationResult(
         "how_to_use": "🛠️ How To Use It"
     };
 
-    return 
-        <div style={{
+    return <div style={{
             "width": "100%",
             "maxWidth": "720px",
             "display": "flex",
@@ -193,32 +192,30 @@ def:pub ExplanationResult(
                     </h3>
                     <div style={{"display": "flex", "flexDirection": "column", "gap": "1.25rem"}}>
                         {[
-                            <div key={str(qi)}>
-                                {[
-                                    <p key="q" style={{"margin": "0 0 0.75rem", "fontWeight": "600", "color": "#e8e8f0", "fontSize": "0.95rem"}}>
-                                        {list(q.keys())[0]}
-                                    </p>
-                                ]}
+                            <div key={str(q["_idx"])}>
+                                <p style={{"margin": "0 0 0.75rem", "fontWeight": "600", "color": "#e8e8f0", "fontSize": "0.95rem"}}>
+                                    {q["question"]}
+                                </p>
                                 <div style={{"display": "flex", "flexDirection": "column", "gap": "0.4rem"}}>
                                     {[
                                         <div
-                                            key={str(ai)}
+                                            key={str(ans["_idx"])}
                                             style={{
                                                 "padding": "0.6rem 0.85rem",
                                                 "borderRadius": "7px",
-                                                "background": ("#1a3a1a" if ai == 0 else "#0d0d20"),
-                                                "border": ("1px solid #4ade80" if ai == 0 else "1px solid #2a2a4a"),
-                                                "color": ("#4ade80" if ai == 0 else "#aaa"),
+                                                "background": ("#1a3a1a" if ans["_idx"] == 0 else "#0d0d20"),
+                                                "border": ("1px solid #4ade80" if ans["_idx"] == 0 else "1px solid #2a2a4a"),
+                                                "color": ("#4ade80" if ans["_idx"] == 0 else "#aaa"),
                                                 "fontSize": "0.88rem"
                                             }}
                                         >
-                                            {ans}
+                                            {ans["text"]}
                                         </div>
-                                        for ai, ans in enumerate(list(q.values())[0])
+                                        for ans in q["answers"]
                                     ]}
                                 </div>
                             </div>
-                            for qi, q in enumerate(quiz)
+                            for q in quiz
                         ]}
                     </div>
                 </div>
