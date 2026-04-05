@@ -5,7 +5,7 @@ Combines server-side endpoints with client-side UI.
 
 # Import server-side data models and walkers
 sv {
-    import from endpoints { Todo, AddTodo, ListTodos, ToggleTodo, DeleteTodo }
+    import from endpoints { UserProfile, ExplanationSession, ConceptNode, HasConcept, DependsOn, UsesTerm, TermExtractorWalker, DependencyWalker, ExplanationBuilderWalker }
 }
 
 # Client-side UI
