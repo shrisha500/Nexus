@@ -1,0 +1,80 @@
+/* depth.css */
+
+.depth-selector {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.depth-selector--disabled { opacity: 0.45; pointer-events: none; }
+
+.depth-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 14px 8px;
+  background: var(--bg-input);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: all 0.18s;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.depth-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+
+/* Per-level color accent */
+.depth-btn:nth-child(1)::before { background: linear-gradient(135deg, rgba(105,219,124,0.1), transparent); }
+.depth-btn:nth-child(2)::before { background: linear-gradient(135deg, rgba(77,171,247,0.1), transparent); }
+.depth-btn:nth-child(3)::before { background: linear-gradient(135deg, rgba(151,117,250,0.1), transparent); }
+.depth-btn:nth-child(4)::before { background: linear-gradient(135deg, rgba(255,107,107,0.1), transparent); }
+
+.depth-btn:hover::before,
+.depth-btn--active::before { opacity: 1; }
+
+.depth-btn:hover {
+  border-color: var(--border-bright);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Active state per level */
+.depth-btn:nth-child(1).depth-btn--active { border-color: var(--lime);   box-shadow: 0 0 16px rgba(105,219,124,0.22); }
+.depth-btn:nth-child(2).depth-btn--active { border-color: var(--sky);    box-shadow: 0 0 16px rgba(77,171,247,0.22);  }
+.depth-btn:nth-child(3).depth-btn--active { border-color: var(--violet); box-shadow: 0 0 16px rgba(151,117,250,0.22); }
+.depth-btn:nth-child(4).depth-btn--active { border-color: var(--coral);  box-shadow: 0 0 16px rgba(255,107,107,0.22); }
+
+.depth-btn__number {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1;
+  position: relative;
+}
+.depth-btn:nth-child(1) .depth-btn__number { color: var(--lime);   }
+.depth-btn:nth-child(2) .depth-btn__number { color: var(--sky);    }
+.depth-btn:nth-child(3) .depth-btn__number { color: var(--violet); }
+.depth-btn:nth-child(4) .depth-btn__number { color: var(--coral);  }
+
+.depth-btn__label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  position: relative;
+}
+
+.depth-btn__desc {
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.35;
+  position: relative;
+}

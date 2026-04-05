@@ -1,0 +1,119 @@
+/* term.css */
+
+.term-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 100px;
+  background: rgba(77,171,247,0.1);
+  border: 1px solid rgba(77,171,247,0.25);
+  cursor: pointer;
+  transition: all 0.18s;
+  position: relative;
+  font-size: 13px;
+}
+
+.term-chip:hover {
+  background: rgba(77,171,247,0.18);
+  border-color: rgba(77,171,247,0.45);
+  transform: translateY(-1px);
+}
+
+.term-chip--seen {
+  background: rgba(105,219,124,0.08);
+  border-color: rgba(105,219,124,0.22);
+}
+.term-chip--seen:hover {
+  background: rgba(105,219,124,0.14);
+  border-color: rgba(105,219,124,0.38);
+}
+
+.term-chip__word {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--sky);
+  font-weight: 500;
+}
+.term-chip--seen .term-chip__word { color: var(--lime); }
+
+/* Popover */
+.term-chip__popover {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  width: 260px;
+  animation: pop-in 0.18s cubic-bezier(0.22,1,0.36,1);
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px) scale(0.96); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+.term-chip__popover-inner {
+  background: var(--bg-card-alt, #1e1940);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--r-lg);
+  padding: 16px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Arrow */
+.term-chip__popover-inner::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 10px;
+  height: 10px;
+  background: var(--bg-card-alt, #1e1940);
+  border-right: 1px solid var(--border-bright);
+  border-bottom: 1px solid var(--border-bright);
+}
+
+.term-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.term-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.term-value {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.45;
+}
+
+.term-value--name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--sky);
+}
+
+.term-value--context { color: var(--text-secondary); }
+
+.term-chip__seen-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lime);
+  background: rgba(105,219,124,0.1);
+  padding: 3px 8px;
+  border-radius: 100px;
+  border: 1px solid rgba(105,219,124,0.22);
+  align-self: flex-start;
+}

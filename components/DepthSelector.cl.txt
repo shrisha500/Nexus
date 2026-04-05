@@ -1,0 +1,34 @@
+"""DepthSelector.cl.jac — 4-level depth picker."""
+
+import from "../styles/depth.css";
+
+def:pub DepthSelector(
+    value:    int,
+    onChange: any,
+    disabled: bool = False
+) -> JsxElement {
+    levels = [
+        {"level": 1, "label": "Intuition",  "desc": "High-level feel"},
+        {"level": 2, "label": "Practical",  "desc": "Enough to use it"},
+        {"level": 3, "label": "Technical",  "desc": "How it really works"},
+        {"level": 4, "label": "Deep",       "desc": "Internals & edge cases"}
+    ];
+
+    return <div className={("depth-selector" + (" depth-selector--disabled" if disabled else ""))}>
+        {[
+            <button
+                key={d["level"]}
+                type="button"
+                className={("depth-btn" + (" depth-btn--active" if d["level"] == value else ""))}
+                onClick={lambda -> None { onChange(d["level"]); }}
+                disabled={disabled}
+                title={d["desc"]}
+            >
+                <span className="depth-btn__number">{d["level"]}</span>
+                <span className="depth-btn__label">{d["label"]}</span>
+                <span className="depth-btn__desc">{d["desc"]}</span>
+            </button>
+            for d in levels
+        ]}
+    </div>;
+}

@@ -1,0 +1,113 @@
+/* globals.css — Colorful, bold, modern design system */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Fira+Code:wght@400;500&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* ── Core palette ── */
+  --coral:       #ff6b6b;
+  --amber:       #ffa94d;
+  --lime:        #69db7c;
+  --sky:         #4dabf7;
+  --violet:      #9775fa;
+  --pink:        #f783ac;
+
+  /* ── Gradients ── */
+  --grad-accent:  linear-gradient(90deg, var(--coral), var(--amber));
+  --grad-cool:    linear-gradient(90deg, var(--sky), var(--violet));
+  --grad-prereq:  linear-gradient(90deg, var(--amber), var(--lime));
+  --grad-btn:     linear-gradient(135deg, #ff6b6b 0%, #e8408c 100%);
+  --grad-card:    linear-gradient(145deg, rgba(255,255,255,0.065) 0%, rgba(255,255,255,0.02) 100%);
+
+  /* ── Backgrounds ── */
+  --bg-page:     #0e0b1e;
+  --bg-sidebar:  #100d22;
+  --bg-card:     #181430;
+  --bg-card-alt: #1d1940;
+  --bg-input:    #12102a;
+  --bg-hover:    rgba(255,255,255,0.05);
+  --bg-active:   rgba(255,107,107,0.1);
+
+  /* ── Text ── */
+  --text-primary:   #f0eeff;
+  --text-secondary: #9d96c4;
+  --text-muted:     #5d578a;
+
+  /* ── Borders ── */
+  --border:         rgba(255,255,255,0.08);
+  --border-accent:  rgba(255,107,107,0.32);
+  --border-bright:  rgba(255,255,255,0.15);
+
+  /* ── Shadows ── */
+  --shadow-sm:   0 2px 8px rgba(0,0,0,0.35);
+  --shadow-md:   0 6px 24px rgba(0,0,0,0.45);
+  --shadow-card: 0 8px 36px rgba(0,0,0,0.5);
+  --shadow-coral:0 4px 28px rgba(255,107,107,0.28);
+
+  /* ── Radius ── */
+  --r-sm:  8px;
+  --r-md:  14px;
+  --r-lg:  20px;
+  --r-xl:  28px;
+
+  /* ── Fonts ── */
+  --font-display: 'Plus Jakarta Sans', sans-serif;
+  --font-body:    'Plus Jakarta Sans', sans-serif;
+  --font-mono:    'Fira Code', monospace;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* Mesh gradient backdrop */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 15%,  rgba(255,107,107,0.13) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 85% 75%,  rgba(77,171,247,0.10)  0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 55% 50%,  rgba(151,117,250,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 70% 5%,   rgba(105,219,124,0.06) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body > #root { position: relative; z-index: 1; }
+
+/* Scrollbar */
+::-webkit-scrollbar       { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.13); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+
+:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* Gradient text utility */
+.grad-text {
+  background: var(--grad-accent);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
