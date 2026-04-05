@@ -97,16 +97,17 @@ def:pub app -> JsxElement {
                 else None}
 
                 <div style={{
-    "background": "white",
-    "padding": "2rem",
-    "borderRadius": "16px",
-    "boxShadow": "0 10px 30px rgba(0,0,0,0.2)",
-    "display": "flex",
-    "flexDirection": "column",
-    "alignItems": "center",
-    "gap": "1rem",
-    "width": "420px"
-}}>
+                    "background": "rgb(0, 0, 100)",
+                    "padding": "2rem",
+                    "borderRadius": "16px",
+                    "boxShadow": "0 10px 30px rgba(0,0,0,0.2)",
+                    "display": "flex",
+                    "flexDirection": "column",
+                    "alignItems": "center",
+                    "gap": "1rem",
+                    "width": "100vw",
+                    "height": "100vh"
+                }}>
                     
                     <div style={{
                         "marginBottom": "0.5rem",
