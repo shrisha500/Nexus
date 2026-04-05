@@ -22,7 +22,7 @@ def:pub DepthSelector(
             step={1}
             marks={marks}
             disabled={disabled}
-            onChange={lambda e: any, val: int -> None { onChange(val); }}
+            onChange={lambda (e: any, val: int) -> None { onChange(val); }}
             valueLabelDisplay="auto"
         />
     </div>;
