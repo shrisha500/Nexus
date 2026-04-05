@@ -56,29 +56,6 @@ impl app.handleLogin -> None {
     }
 }
 
-impl app.handleSurvey -> dict {
-    surveyVisible = True;
-    surveyKnownTopics = "";
-    surveyStyle = "";
-    surveyDepth = 3;
-    surveyRetention = False;
-
-    return surveyResult;
-}
-
-impl app.submitSurvey -> None {
-    topics = [t.strip() for t in surveyKnownTopics.split(",") if t.strip()];
-
-    surveyResult = {
-        "known_topics": topics,
-        "style_example": surveyStyle,
-        "depth_pref": surveyDepth,
-        "retention_mode": surveyRetention
-    };
-
-    surveyVisible = False;
-}
-
 impl app.handleSignup -> None {
     error = "";
     if not username.trim() or not password {
@@ -96,8 +73,6 @@ impl app.handleSignup -> None {
         isLoggedIn = True;
         username = "";
         password = "";
-        handleSurvey();
-        
     } else {
         error = result["error"] if result["error"] else "Signup failed";
     }

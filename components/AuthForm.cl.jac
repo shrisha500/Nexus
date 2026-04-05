@@ -52,7 +52,7 @@ def:pub AuthForm(
                         "fontSize": "0.9rem"
                     }}
                 >
-                    {error}
+                    {error.message}
                 </div>
             )
             if error
