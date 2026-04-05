@@ -30,7 +30,7 @@ def:pub AuthForm(
                     "textAlign": "center"
                 }}
             >
-                Jac Todo App
+                Nexus
             </h1>
             <p
                 style={{
