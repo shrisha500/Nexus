@@ -96,7 +96,8 @@ impl app.handleSignup -> None {
         isLoggedIn = True;
         username = "";
         password = "";
-        handleSurvey();
+        values = handleSurvey(); # can I just directly use survey_results?
+        root() spawn SetupProfile(known_topics=values["known_topics"], style_example=values["style_example"], depth_pref=values["depth_pref"], retention_mode=values["retention_mode"]);
         
     } else {
         error = result["error"] if result["error"] else "Signup failed";
