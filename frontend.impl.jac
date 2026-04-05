@@ -1,47 +1,70 @@
-"""Implementations for the Todo App frontend component."""
+"""Implementations for the Adaptive Explanation Engine frontend."""
 
-impl app.fetchTodos -> None {
-    todosLoading = True;
-    result = root() spawn ListTodos();
-    todos = result.reports[0] if result.reports else [];
-    todosLoading = False;
+impl app.fetchSessions -> None {
+    historyLoading = True;
+    result = root() spawn GetSessions();
+    sessions = result.reports[0]["sessions"] if result.reports else [];
+    historyLoading = False;
 }
 
-impl app.addTodo -> None {
-    if not newTodoText.trim() {
+impl app.fetchSessionDetail(sessionId: str) -> None {
+    # Clear fresh results so the session detail renders instead
+    explanationResult = [];
+    quizResult = [];
+    result = root() spawn GetSessionDetail(session_id=sessionId);
+    sessionDetail = result.reports[0] if result.reports else {};
+}
+
+impl app.submitExplanation -> None {
+    if not newRawText.trim() {
+        explanationError = "Please enter some text to explain.";
         return;
     }
-    response = root spawn AddTodo(title=newTodoText);
-    newTodo = response.reports[0];
-    todos = todos.concat(
-        [
-            {
-                "id": newTodo.id,
-                "title": newTodo.title,
-                "completed": newTodo.completed
-            }
-        ]
+    explanationError = "";
+    explanationLoading = True;
+    explanationResult = [];
+    quizResult = [];
+    selectedSessionId = "";
+    sessionDetail = {};
+
+    response = root() spawn Explain(
+        raw_text=newRawText,
+        source_url=newSourceUrl,
+        depth=newDepth
     );
-    newTodoText = "";
-}
 
-impl app.toggleTodo(todoId: str) -> None {
-    root spawn ToggleTodo(todo_id=todoId);
-    todos = [
-        {"id": t.id, "title": t.title, "completed": not t.completed} if t.id == todoId else t
-        for t in todos
-    ];
-}
+    if response.reports {
+        data = response.reports[0];
+        explanationResult = data["explanation"] if "explanation" in data else [];
 
-impl app.deleteTodo(todoId: str) -> None {
-    root spawn DeleteTodo(todo_id=todoId);
-    todos = [t for t in todos if t.id != todoId];
+        # Backend returns quiz as list[dict[str, list[str]]] where each dict is
+        # {question_text: [answer1, answer2, ...]} — normalize to
+        # list[dict] with keys "question" and "answers" for the component.
+        raw_quiz = data["quiz"] if "quiz" in data else [];
+        normalized_quiz = [];
+        for q_dict in raw_quiz {
+            for q_text in q_dict {
+                normalized_quiz.append({
+                    "question": q_text,
+                    "answers": q_dict[q_text]
+                });
+            }
+        }
+        quizResult = normalized_quiz;
+    } else {
+        explanationError = "Something went wrong. Please try again.";
+    }
+
+    explanationLoading = False;
+
+    # Refresh history sidebar so the new session appears
+    fetchSessions();
 }
 
 impl app.handleLogin -> None {
     error = "";
     if not username.trim() or not password {
-        error = "Please fill in all fields";
+        error = "Please fill in all fields.";
         return;
     }
     loading = True;
@@ -52,44 +75,18 @@ impl app.handleLogin -> None {
         username = "";
         password = "";
     } else {
-        error = "Invalid username or password";
+        error = "Invalid username or password.";
     }
-}
-
-impl app.handleSurvey -> dict {
-    surveyVisible = True;
-    surveyKnownTopics = "";
-    surveyStyle = "";
-    surveyDepth = 3;
-    surveyRetention = False;
-
-    print(surveyResult);
-    return surveyResult;
-}
-
-impl app.submitSurvey -> None {
-    topics = [t.strip() for t in surveyKnownTopics.split(",") if t.strip()];
-
-    surveyResult = {
-        "known_topics": topics,
-        "style_example": surveyStyle,
-        "depth_pref": surveyDepth,
-        "retention_mode": surveyRetention
-    };
-
-    surveyVisible = False;
-    root() spawn SetupProfile(known_topics=values["known_topics"], style_example=values["style_example"], depth_pref=values["depth_pref"], retention_mode=values["retention_mode"]);
-
 }
 
 impl app.handleSignup -> None {
     error = "";
     if not username.trim() or not password {
-        error = "Please fill in all fields";
+        error = "Please fill in all fields.";
         return;
     }
     if password.length < 4 {
-        error = "Password must be at least 4 characters";
+        error = "Password must be at least 4 characters.";
         return;
     }
     loading = True;
@@ -99,18 +96,35 @@ impl app.handleSignup -> None {
         isLoggedIn = True;
         username = "";
         password = "";
-        values = handleSurvey(); # can I just directly use survey_results?
-        #root() spawn SetupProfile(known_topics=values["known_topics"], style_example=values["style_example"], depth_pref=values["depth_pref"], retention_mode=values["retention_mode"]);
-        
+        # Show the onboarding survey right after signup
+        surveyVisible = True;
     } else {
-        error = result["error"] if result["error"] else "Signup failed";
+        error = result["error"] if result["error"] else "Signup failed.";
     }
+}
+
+impl app.submitSurvey -> None {
+    topics = [t.strip() for t in surveyKnownTopics.split(",") if t.strip()];
+    root() spawn SetupProfile(
+        known_topics=topics,
+        style_example=surveyStyle,
+        depth_pref=surveyDepth,
+        retention_mode=surveyRetention
+    );
+    surveyVisible = False;
 }
 
 impl app.handleLogout -> None {
     jacLogout();
     isLoggedIn = False;
-    todos = [];
+    sessions = [];
+    selectedSessionId = "";
+    sessionDetail = {};
+    explanationResult = [];
+    quizResult = [];
+    newRawText = "";
+    newSourceUrl = "";
+    newDepth = 2;
     username = "";
     password = "";
     error = "";
@@ -125,8 +139,12 @@ impl app.handleSubmit(e: any) -> None {
     }
 }
 
-impl app.handleTodoKeyPress(e: any) -> None {
-    if e.key == "Enter" {
-        addTodo();
+impl app.handleKeyPress(e: any) -> None {
+    if e.key == "Enter" and not e.shiftKey {
+        submitExplanation();
     }
+}
+
+impl app.handleDepthChange(val: int) -> None {
+    newDepth = val;
 }
