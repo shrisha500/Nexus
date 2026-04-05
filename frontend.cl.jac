@@ -2,7 +2,7 @@
 
 import from "@jac/runtime" { jacSignup, jacLogin, jacLogout, jacIsLoggedIn }
 
-import from .components.TodoItem { TodoItem }
+#import from .components.TodoItem { TodoItem }
 import from .components.AuthForm { AuthForm }
 import from .components.SurveyModal { SurveyModal }
 
