@@ -8,7 +8,6 @@ impl app.fetchSessions -> None {
 }
 
 impl app.fetchSessionDetail(sessionId: str) -> None {
-    # Clear fresh results so the session detail renders instead
     explanationResult = [];
     quizResult = [];
     result = root() spawn GetSessionDetail(session_id=sessionId);
@@ -37,9 +36,6 @@ impl app.submitExplanation -> None {
         data = response.reports[0];
         explanationResult = data["explanation"] if "explanation" in data else [];
 
-        # Backend returns quiz as list[dict[str, list[str]]] where each dict is
-        # {question_text: [answer1, answer2, ...]} — normalize to
-        # list[dict] with keys "question" and "answers" for the component.
         raw_quiz = data["quiz"] if "quiz" in data else [];
         normalized_quiz = [];
         for q_dict in raw_quiz {
@@ -57,7 +53,6 @@ impl app.submitExplanation -> None {
 
     explanationLoading = False;
 
-    # Refresh history sidebar so the new session appears
     fetchSessions();
 }
 
@@ -96,7 +91,6 @@ impl app.handleSignup -> None {
         isLoggedIn = True;
         username = "";
         password = "";
-        # Show the onboarding survey right after signup
         surveyVisible = True;
     } else {
         error = result["error"] if result["error"] else "Signup failed.";

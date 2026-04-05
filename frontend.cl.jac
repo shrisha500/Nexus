@@ -56,10 +56,10 @@ def:pub app -> JsxElement {
     async def handleLogin -> None;
     async def handleSignup -> None;
     async def handleSubmit(e: any) -> None;
-    def handleLogout -> None;
-    def submitSurvey -> None;
+    async def handleLogout -> None;
+    async def submitSurvey -> None;
     def handleDepthChange(val: int) -> None;
-    def handleKeyPress(e: any) -> None;
+    async def handleKeyPress(e: any) -> None;
 
     # ================================================================
     # LOADING SCREEN
