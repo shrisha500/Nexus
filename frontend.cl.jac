@@ -124,7 +124,7 @@ def:pub app -> JsxElement {
                             onKeyPress={handleTodoKeyPress}
                             placeholder="What needs to be explained?"
                             style={{
-                                "width": "100%",
+                                "width": "50%",
                                 "padding": "0.75rem 1rem",
                                 "fontSize": "0.95rem",
                                 "border": "1px solid #ddd",
@@ -143,7 +143,7 @@ def:pub app -> JsxElement {
                             onKeyPress={handleTodoKeyPress}
                             placeholder="Enter a source URL"
                             style={{
-                                "width": "100%",
+                                "width": "50%",
                                 "padding": "0.75rem 1rem",
                                 "fontSize": "0.95rem",
                                 "border": "1px solid #ddd",
@@ -161,7 +161,7 @@ def:pub app -> JsxElement {
                             onKeyPress={handleTodoKeyPress}
                             placeholder="How in depth do you want to go?"
                             style={{
-                                "width": "100%",
+                                "width": "50%",
                                 "padding": "0.75rem 1rem",
                                 "fontSize": "0.95rem",
                                 "border": "1px solid #ddd",
